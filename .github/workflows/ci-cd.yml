@@ -1,0 +1,50 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Paso 1: Obtener el código del repo
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # Paso 2: Instalar Node.js para la prueba
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # Paso 3: Instalar dependencias (si tuvieras)
+      - name: Install dependencies
+        run: npm install || echo "No dependencies to install"
+
+      # Paso 4: Ejecutar prueba unitaria
+      - name: Run tests
+        run: node test.js
+
+      # Paso 5: Loguearse en Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Paso 6: Build y Push de la imagen Docker
+      - name: Build Docker image
+        run: docker build -t darlinii/hola-mundo-html:latest .
+
+      - name: Push Docker image
+        run: docker push darlinii/hola-mundo-html:latest
+
+      # Paso 7: Deploy en Render (opcional)
+      - name: Deploy to Render
+        run: |
+          curl -X POST -H "Accept: application/json" \
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          https://api.render.com/deploy/srv-XXXXXX
